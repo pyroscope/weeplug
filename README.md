@@ -27,4 +27,6 @@ A collection of WeeChat Python plugins.
 **GitHub**
 
  * [WeeChat](https://github.com/weechat/weechat)
+ * [Official Scripts for WeeChat](https://github.com/weechat/scripts)
  * [jnbek's WeeChat Configs/Plugins](https://github.com/jnbek/_weechat)
+ * [Nils Görs' Scripts](https://github.com/weechatter/weechat-scripts)
