@@ -25,6 +25,15 @@ ScriptRegistration = namedtuple('ScriptRegistration', 'name, author, version, li
 class ScriptBase(object):
     """ Base class for WeeChat scripts.
     """
+    TRUTH_TRUE = ('1', 'y', 'yes', 'on', 'true', 'enabled')
+    TRUTH_FALSE = ('', '0', 'n', 'no', 'off', 'false', 'disabled')
+
+    BASE_SETTINGS = dict(
+        trace = ('off', 'trace logging enabled? [on/off]'),
+    )
+    SETTINGS = {}
+    PREFIXES = {}
+
 
     @classmethod
     def load_via_shim(cls, namespace):
@@ -71,7 +80,9 @@ class ScriptBase(object):
             self.callback('on_unload'),
             getattr(self, 'CHARSET', ''), # default is UTF-8
         )
-        self.trace('', repr(self.registration))
+
+        self._settings = self.BASE_SETTINGS.copy()
+        self._settings.update(self.SETTINGS)
 
 
     def callback(self, func, name=None):
@@ -101,6 +112,21 @@ class ScriptBase(object):
         return func_name
 
 
+    def is_enabled(self, key):
+        """ Queries the plugin config for a boolean value.
+        """
+        val = self.api.config_get_plugin(key).lower()
+        if val in self.TRUTH_TRUE:
+            return True
+
+        if val not in self.TRUTH_FALSE:
+            self.log('setting <{0}> has invalid boolean value "{1}", changing to default ("{2}")',
+                key, val, self._settings[key][0], prefix='warn')
+            self.api.config_set_plugin(key, self._settings[key][0])
+
+        return False
+
+
     def log(self, msg, *args, **kwargs):
         """ Write an informational or error message to the core buffer.
 
@@ -110,6 +136,8 @@ class ScriptBase(object):
         """
         prefix = kwargs.get('prefix', '')
         prefix_text = self.api.prefix(prefix or 'default')
+        if not prefix_text:
+            prefix_text = self.PREFIXES.get(prefix or 'default', '')
         if prefix and not prefix_text:
             prefix_text = prefix + '\t'
 
@@ -121,16 +149,26 @@ class ScriptBase(object):
     def trace(self, msg, *args, **kwargs):
         """ Low-level trace logging.
         """
-        kwargs = kwargs.copy()
-        kwargs['prefix'] = self.api.color('gray') + '~~~'
-        self.log(msg, *args, **kwargs)
+        if self.is_enabled('trace'):
+            kwargs = kwargs.copy()
+            kwargs['prefix'] = self.api.color('gray') + '~~~'
+            self.log(msg, *args, **kwargs)
 
 
     def on_load(self):
         """ Template method called after registration.
         """
+        self.PREFIXES.setdefault('warn', self.api.color('orange') + '-!-\t')
+
         weechat_version = self.api.info_get('version', '') or 'N/A'
         self.log('loaded shim {1} into WeeChat version {0}', weechat_version, self.namespace['__file__'], prefix='join')
+
+        for key, (default, help) in self._settings.iteritems():
+            if not self.api.config_is_set_plugin(key):
+                self.api.config_set_plugin(key, default)
+            self.api.config_set_desc_plugin(key, '{0} (default: "{1}")'.format(help, default))
+
+        self.trace('', repr(self.registration))
 
         return self.api.WEECHAT_RC_OK
 
