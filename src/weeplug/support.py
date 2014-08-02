@@ -164,7 +164,7 @@ class ScriptBase(object):
     def on_load(self):
         """ Template method called after registration.
         """
-        self.PREFIXES.setdefault('warn', self.api.color('orange') + '-!-\t')
+        self.PREFIXES.setdefault('warn', self.api.color('yellow') + '-!-\t')
 
         weechat_version = self.api.info_get('version', '') or 'N/A'
         self.log('loaded shim {1} into WeeChat version {0}', weechat_version, self.namespace['__file__'], prefix='join')
