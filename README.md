@@ -2,6 +2,12 @@
 
 A collection of WeeChat Python scripts.
 
+To make writing these scripts easier, `weeplug` provides the plumbing and helpers to
+write them in an object-oriented style, and hides the gory (C) details of the Python plugin
+as far as possible, like manual memory management and so-called ‘pointers’.
+`weeplug` also makes it easy to use a Python virtualenv,
+to provide your WeeChat scripts with external dependencies.
+
 
 ## Installation
 
