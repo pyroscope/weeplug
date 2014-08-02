@@ -8,7 +8,7 @@ import sys
 try:
     import weechat
 except ImportError, exc:
-    raise RuntimeError("This script must be run under WeeChat - get it at http://www.weechat.org/ ({0})".format(exc))
+    raise RuntimeError("This script must be run under WeeChat, get it at http://www.weechat.org/ ({0})".format(exc))
 
 # Activate the virtualenv (once)
 if not any('/.weechat/venv/' in i for i in sys.path):
@@ -22,4 +22,4 @@ except ImportError, exc:
         " did you read 'https://github.com/pyroscope/weeplug#installation'? ({0})".format(exc))
 
 if __name__ == "__main__":
-    weeplug.load_script(__file__, globals())
+    weeplug.ScriptBase.load_via_shim(globals())
