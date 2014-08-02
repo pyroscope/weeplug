@@ -141,9 +141,14 @@ class ScriptBase(object):
         if prefix and not prefix_text:
             prefix_text = prefix + '\t'
 
-        self.api.print_('', '{0}{1}: {2}'.format(prefix_text, self.registration.name,
+        full_msg = '{0}{1}: {2}'.format(prefix_text, self.registration.name,
             msg.format(*args, **kwargs) if msg else ' '.join(str(i) for i in args)
-        ))
+        )
+
+        if kwargs.get('no_log', False):
+            self.api.print_date_tags('', 0, 'no_log', full_msg)
+        else:
+            self.api.print_('', full_msg)
 
 
     def trace(self, msg, *args, **kwargs):
@@ -152,6 +157,7 @@ class ScriptBase(object):
         if self.is_enabled('trace'):
             kwargs = kwargs.copy()
             kwargs['prefix'] = self.api.color('gray') + '~~~'
+            kwargs['no_log'] = True
             self.log(msg, *args, **kwargs)
 
 
