@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Plugin loader shim
+# Script loader shim
 #
 import os
 import sys
@@ -22,4 +22,4 @@ except ImportError, exc:
         " did you read 'https://github.com/pyroscope/weeplug#installation'? ({0})".format(exc))
 
 if __name__ == "__main__":
-    weeplug.load_plugin(__file__, globals())
+    weeplug.load_script(__file__, globals())

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" weeplug – Plugin helpers.
+""" weeplug – WeeChat script helpers.
 """
 # Copyright ⓒ  2014 pyroscope <pyroscope.project@gmail.com>
 #
@@ -18,21 +18,21 @@
 import os
 from collections import namedtuple
 
-PluginRegistration = namedtuple('PluginRegistration', 'name, author, version, license, description, shutdown_function, charset')
+ScriptRegistration = namedtuple('ScriptRegistration', 'name, author, version, license, description, shutdown_function, charset')
 
 
-def load_plugin(shimfile, namespace):
-    """ Load a plugin from a shim file.
+def load_script(shimfile, namespace):
+    """ Load a script from a shim file.
     """
     import weechat
     import weeplug
 
-    registration = PluginRegistration(
+    registration = ScriptRegistration(
         os.path.splitext(os.path.basename(shimfile))[0],
         "{0} <{1}>".format(weeplug.__author__, weeplug.__author_email__),
         weeplug.__version__,
         weeplug.__license__,
-        weeplug.__doc__.split('.')[0].strip(), # TODO: Plugin class docstring
+        weeplug.__doc__.split('.')[0].strip(), # TODO: Use script class docstring
         '', # name of function called when script is unloaded (can be empty string)
         '', # default is UTF-8
     )

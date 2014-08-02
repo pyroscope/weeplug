@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" weeplug – WeeChat plugins.
+""" weeplug – WeeChat scripts.
 
     Copyright ⓒ  2014 pyroscope <pyroscope.project@gmail.com>
 
