@@ -39,8 +39,18 @@ except ImportError, exc:
 basedir = os.path.dirname(__file__)
 srcfile = lambda *args: os.path.join(*((basedir,) + args))
 
+expected = ('version', 'author', 'author_email', 'license', 'long_description')
+project = {}
 with open(srcfile('src', name, '__init__.py')) as handle:
-    version = re.search(r"""^__version__ = (?P<q>['"])(.+?)(?P=q)$""", handle.read(), re.MULTILINE).group(2)
+    init_py = handle.read()
+    project['long_description'] = re.search(r'^"""(.+?)^"""$', init_py, re.DOTALL|re.MULTILINE).group(1).strip()
+    for line in init_py.splitlines():
+        match = re.match(r"""^__({0})__ += (?P<q>['"])(.+?)(?P=q)$""".format('|'.join(expected)), line)
+        if match:
+            project[match.group(1)] = match.group(3)
+
+if not all(i in project for i in expected):
+    raise RuntimeError("Missing or bad metadata in '{0}' package".format(name))
 
 with open(srcfile('requirements.txt'), 'r') as handle:
     requires = [i.strip() for i in handle if i.strip() and not i.startswith('#')]
@@ -48,13 +58,9 @@ with open(srcfile('requirements.txt'), 'r') as handle:
 #with open(srcfile('test-requirements.txt'), 'r') as handle:
 #    test_requires = [i.strip() for i in handle if i.strip() and not i.startswith('#')]
 
-project = dict(
+project.update(dict(
     name = name,
-    version = version,
-    description = 'A collection of WeeChat Python plugins',
-    author = 'pyroscope',
-    author_email = 'pyroscope.project@gmail.com',
-    license = 'GPLv3',
+    description = project['long_description'].split('.')[0],
     url = 'https://github.com/pyroscope/weeplug',
     package_dir = {'': 'src'},
     packages = find_packages(srcfile('src'), exclude=['tests']),
@@ -78,7 +84,7 @@ project = dict(
         'Programming Language :: Python :: 2.7',
         'Topic :: Communications :: Chat :: Internet Relay Chat',
     ),
-)
+))
 
 if __name__ == '__main__':
     setup(**project)

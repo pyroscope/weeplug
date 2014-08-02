@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" weeplug – WeeChat plugins.
+""" weeplug – A collection of WeeChat Python plugins.
 
     Copyright ⓒ  2014 pyroscope <pyroscope.project@gmail.com>
 
@@ -16,5 +16,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from weeplug.support import load_plugin
 
-__version__ = '0.1.0'
+__version__         = '0.1.0'
+__author__          = 'pyroscope'
+__author_email__    = 'pyroscope.project@gmail.com'
+__license__         = 'GPL3'
+
+__all__ = [
+    'load_plugin',
+    #'',
+]
