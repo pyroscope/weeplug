@@ -51,7 +51,14 @@ class ScriptBase(object):
 
         # This allows later additions / putting up a facade
         self.api = weechat
-        self.api.print_ = self.api.prnt
+
+        # Fix 'prnt' abomination
+        if not hasattr(self.api, 'print_'):
+            self.api.print_ = self.api.prnt
+            #self.api.print_date = self.api.prnt_date
+            #self.api.print_tags = self.api.prnt_tags
+            self.api.print_date_tags = self.api.prnt_date_tags
+            self.api.print_y = self.api.prnt_y
 
         self.namespace = namespace
         self.name = os.path.splitext(os.path.basename(self.namespace['__file__']))[0]
