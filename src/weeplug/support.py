@@ -32,12 +32,11 @@ class ScriptBase(object):
         """
         # TODO: Lookup / import entry point
         script = WeePlugScriptBase(namespace)
-
         if not script.api.register(*script.registration):
             return
 
-        weechat_version = int(script.api.info_get('version_number', '') or 0)
-        if weechat_version < 0x00030700:
+        script.api_version_number = int(script.api.info_get('version_number', '') or 0)
+        if script.api_version_number < 0x00030700:
             script.log('need WeeChat version 0.3.7 or higher', prefix='error')
             script.api.command('', '/wait 1ms /python unload {0}'.format(script.name))
         else:
@@ -51,6 +50,7 @@ class ScriptBase(object):
 
         # This allows later additions / putting up a facade
         self.api = weechat
+        self.api_version_number = 0
 
         # Fix 'prnt' abomination
         if not hasattr(self.api, 'print_'):
@@ -71,6 +71,7 @@ class ScriptBase(object):
             self.callback('on_unload'),
             getattr(self, 'CHARSET', ''), # default is UTF-8
         )
+        self.trace('', repr(self.registration))
 
 
     def callback(self, func, name=None):
@@ -105,11 +106,24 @@ class ScriptBase(object):
 
             The keyword argument `prefix` can be 'error' and other values as listed at
             http://weechat.org/files/doc/stable/weechat_plugin_api.en.html#_weechat_prefix
-            in the API reference.
+            in the API reference. For unkonwn prefixes, the text is taken literally.
         """
-        self.api.print_('', '{0}{1}: {2}'.format(
-            self.api.prefix(kwargs.get('prefix', 'default')), self.registration.name, msg.format(*args, **kwargs)
+        prefix = kwargs.get('prefix', '')
+        prefix_text = self.api.prefix(prefix or 'default')
+        if prefix and not prefix_text:
+            prefix_text = prefix + '\t'
+
+        self.api.print_('', '{0}{1}: {2}'.format(prefix_text, self.registration.name,
+            msg.format(*args, **kwargs) if msg else ' '.join(str(i) for i in args)
         ))
+
+
+    def trace(self, msg, *args, **kwargs):
+        """ Low-level trace logging.
+        """
+        kwargs = kwargs.copy()
+        kwargs['prefix'] = self.api.color('gray') + '~~~'
+        self.log(msg, *args, **kwargs)
 
 
     def on_load(self):
