@@ -45,9 +45,29 @@ class Buffer(object):
         """Server moniker of this buffer (for IRC buffers)."""
         return self.name.rsplit('.', 1)[0]
 
+    @property
+    def irc_nick(self):
+        """Own nick for this buffer (for IRC buffers)."""
+        return self._script.api.info_get("irc_nick", self.server) or None
+
+
     def __repr__(self):
         """ Stringify this buffer.
         """
         return '<{0} #{1} "{2}">'.format(self.__class__.__name__, self.number, self.name)
+
+
+    def print_(self, text):
+        """Print given text to buffer."""
+        if text.startswith('/'):
+            text = ' ' + text
+        self._script.api.command(self._bufptr, text)
+
+
+    def command(self, cmd, *args):
+        """Execute a command in this buffer."""
+        self._script.api.command(self._bufptr, '/{0}{1}{2}'.format(
+            cmd.lstrip('/'), ' ' if args else '', ' '.join(str(i) for i in args)
+        ))
 
 #
