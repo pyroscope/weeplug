@@ -11,10 +11,37 @@ to provide your WeeChat scripts with external dependencies.
 
 ## Installation
 
-**TODO**
+`weeplug` is a normal Python package and uses a standard Python project layout. The package is
+installed into a *virtualenv* dedicated to WeeChat, and then shoehorned into the Python plugin's
+loading mechanism by means of a shim file.
+
+```sh
+/usr/bin/virtualenv ~/.weechat/venv
+~/.weechat/venv/bin/pip install -e "git+https://github.com/pyroscope/weeplug.git#egg=weeplug"
+```
+
+To directly use the code from a git working directory at another location, additionally call this command:
+
+```sh
+~/.weechat/venv/bin/python ./setup.py develop -U
+```
+
+**TODO** add `weeplug link` helper command to do this
+
+Finally, to make the `weeplug` scripts available within your WeeChat configuration, symlink the `shim.py` file
+to the default script location for each script.
+
+```sh
+weeplug_base="$(dirname $(~/.weechat/venv/bin/python -c 'import weeplug; print weeplug.__file__'))"
+for script in "$weeplug_base/scripts"/[^_]*.py; do
+    ln -nfs "$weeplug_base/data/shim.py" ~/.weechat/python/"$(basename $script)"
+done
+```
 
 
 ## Usage
+
+### 'fluxfeed' Script
 
 **TODO**
 

@@ -64,7 +64,7 @@ project.update(dict(
     url = 'https://github.com/pyroscope/weeplug',
     package_dir = {'': 'src'},
     packages = find_packages(srcfile('src'), exclude=['tests']),
-    zip_safe = True,
+    zip_safe = False,
     include_package_data = True,
     install_requires = requires,
     #setup_requires = ...,
