@@ -66,6 +66,14 @@ class ScriptBase(object):
     SETTINGS = {}
     PREFIXES = {}
 
+    # Override with something like `dict(my_callback_method="*,irc_in_join")`;
+    # Alternate event names "before::CMD" and "after::CMD" are supported.
+    SIGNAL_HOOKS = {}
+
+    # Override with something like `dict(my_callback_method=(hook_print_args))`;
+    # use `None` for the default `("", "", "", 1)` (all messages, strip colors).
+    PRINT_HOOKS = {}
+
 
     @classmethod
     def load_via_shim(cls, namespace):
@@ -116,7 +124,7 @@ class ScriptBase(object):
         self._settings.update(self.SETTINGS)
 
 
-    def callback(self, func, name=None):
+    def callback(self, func, name=None, withdata=False):
         """ Return a callback name for the given method name or callable in `func`.
 
             Note that you'll cause a memory leak of you call this repeatedly
@@ -140,7 +148,7 @@ class ScriptBase(object):
         func_name = '__'.join(cb_name)
         self.namespace.setdefault(func_name, func_obj)
 
-        return func_name
+        return (func_name, func_name) if withdata else func_name
 
 
     def is_enabled(self, key):
@@ -192,6 +200,31 @@ class ScriptBase(object):
             self.log(msg, *args, **kwargs)
 
 
+    def _add_options(self):
+        """ Add configuration options.
+        """
+        for key, (default, help) in self._settings.iteritems():
+            if not self.api.config_is_set_plugin(key):
+                self.api.config_set_plugin(key, default)
+            self.api.config_set_desc_plugin(key, '{0} (default: "{1}")'.format(help, default))
+
+
+    def _add_signal_hooks(self):
+        """ Add configured signal hooks.
+        """
+        for func, mask in self.SIGNAL_HOOKS.iteritems():
+            mask = mask.replace("before::", "irc_in_").replace("after::", "irc_in2_")
+            self.api.hook_signal(*(mask + self.callback(func, withdata=True)))
+
+
+    def _add_print_hooks(self):
+        """ Add configured print hooks.
+        """
+        for func, args in self.PRINT_HOOKS.iteritems():
+            args = args or ("", "", "", 1)
+            self.api.hook_print(*(args + self.callback(func, withdata=True)))
+
+
     def on_load(self):
         """ Template method called after registration.
         """
@@ -200,12 +233,13 @@ class ScriptBase(object):
         weechat_version = self.api.info_get('version', '') or 'N/A'
         self.log('loaded shim {1} into WeeChat version {0}', weechat_version, self.namespace['__file__'], prefix='join')
 
-        for key, (default, help) in self._settings.iteritems():
-            if not self.api.config_is_set_plugin(key):
-                self.api.config_set_plugin(key, default)
-            self.api.config_set_desc_plugin(key, '{0} (default: "{1}")'.format(help, default))
+        # Add configuration, after that trace() becomes usable
+        self._add_options()
+        self.trace('{0}', self.registration)
 
-        self.trace('', repr(self.registration))
+        # Add all sorts of hooks, if activated
+        self._add_signal_hooks()
+        self._add_print_hooks()
 
         return self.api.WEECHAT_RC_OK
 
