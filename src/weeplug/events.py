@@ -30,15 +30,15 @@ class PrintEvent(object):
 
             ('cb__plugin__func__123456', '0x123456', 2L, 'freenode.#weeplug', '#weeplug',
              '1407345499', 'irc_privmsg,notify_message,nick_pyroscope,log1',
-             True, False, '@pyroscope', 'test 123')
+             '1', '0', '@pyroscope', 'test 123')
         """
         # Split args
-        self.data, _buffer, _timestamp, self.tags, _displayed, _hilighted, self.prefix, self.message = args
+        self.data, _buffer, _timestamp, _tags, _displayed, _hilighted, self.prefix, self.message = args
 
         # Validate args
         self.buffer = coretypes.Buffer(script, _buffer)
         self.timestamp = int(_timestamp)
-        self.tags = set(self.tags.split(','))
+        self.tags = set(_tags.split(','))
         self.displayed = bool(int(_displayed))
         self.hilighted = bool(int(_hilighted))
 
