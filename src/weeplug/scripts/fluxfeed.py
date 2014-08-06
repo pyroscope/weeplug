@@ -34,5 +34,13 @@ class FluxFeedScript(WeePlugScriptBase):
             ('cb__fluxfeed__scanner__39486640', '0x234eef0', 2L, 'freenode.#weeplug', '#weeplug',
              '1407345499', 'irc_privmsg,notify_message,nick_pyroscope,log1', True, False, '@pyroscope', 'test 123')
         """
-        self.trace('scanner: {0}', events.PrintEvent(self, args))
+        ev = events.PrintEvent(self, args)
+        mynick = ev.buffer.irc_nick
+        if not mynick or 'nick_' + mynick in ev.tags:
+            # Always ignore non-IRC and own text, to avoid endless loops
+            self.trace('scanner: Ignored {0}', ev)
+            return self.api.WEECHAT_RC_OK
+
+        self.trace('scanner[{1}]: {0}', ev, mynick)
+
         return self.api.WEECHAT_RC_OK
