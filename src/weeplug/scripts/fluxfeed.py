@@ -69,7 +69,7 @@ class FluxFeedScript(BuiltinsScriptBase):
                 triggerdef.update(parts.groupdict())
                 triggerdef.sysattr = set(triggerdef.sysattr.strip('+').split('+'))
                 try:
-                    triggerdef.regex = re.compile(triggerdef.regex)
+                    triggerdef.regex = re.compile(triggerdef.regex, re.I if 'i' in triggerdef.flags else 0)
                 except re.error, exc:
                     self.log('Ignoring trigger with malformed regex ({1}): {0}', trigger, exc, prefix='warn')
                 else:
