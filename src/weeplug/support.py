@@ -16,10 +16,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import sys
+import inspect
 from collections import namedtuple
+
+from weeplug import errors
 
 
 ScriptRegistration = namedtuple('ScriptRegistration', 'name, author, version, license, description, shutdown_function, charset')
+
+
+def _lookup_script(namespace):
+    """ Load the implementation class of scripts.
+    """
+    # TODO: Look up external entry points
+    script_name = os.path.splitext(os.path.basename(namespace['__file__']))[0]
+    module_name = "weeplug.scripts." + script_name
+    ##uptodate = reload if module_name in sys.modules else lambda _: _
+
+    try:
+        script_module = __import__(module_name, globals(), {}, ['__name__'])
+        ##uptodate(script_module)
+    except ImportError, exc:
+        raise errors.WeePlugError("Cannot load built-in script '{0}' ({1})".format(script_name, exc))
+
+    # Find script class
+    script_class = [v
+        for k, v in vars(script_module).iteritems()
+        if not k.startswith('_') and inspect.isclass(v) and v is not WeePlugScriptBase
+        and issubclass(v, WeePlugScriptBase)
+    ]
+    if not script_class:
+        raise errors.WeePlugError("No script class in '{0}'".format(module_name))
+    elif len(script_class) > 1:
+        raise errors.WeePlugError("Multiple script classes in '{0}'".format(module_name))
+
+    return script_class[0](namespace)
 
 
 class ScriptBase(object):
@@ -39,8 +71,7 @@ class ScriptBase(object):
     def load_via_shim(cls, namespace):
         """ Load a script from a shim file.
         """
-        # TODO: Lookup / import entry point
-        script = WeePlugScriptBase(namespace)
+        script = _lookup_script(namespace)
         if not script.api.register(*script.registration):
             return
 
