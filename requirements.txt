@@ -1,3 +1,5 @@
 #
 # Dependency list for pip
 #
+requests
+pyrobase
