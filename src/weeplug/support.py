@@ -43,8 +43,8 @@ def _lookup_script(namespace):
     # Find script class
     script_class = [v
         for k, v in vars(script_module).iteritems()
-        if not k.startswith('_') and inspect.isclass(v) and v is not WeePlugScriptBase
-        and issubclass(v, WeePlugScriptBase)
+        if not k.startswith('_') and inspect.isclass(v)
+        and v not in (ScriptBase, BuiltinsScriptBase) and issubclass(v, ScriptBase)
     ]
     if not script_class:
         raise errors.WeePlugError("No script class in '{0}'".format(module_name))
@@ -151,7 +151,7 @@ class ScriptBase(object):
         return (func_name, func_name) if withdata else func_name
 
 
-    def is_enabled(self, key):
+    def is_true(self, key):
         """ Queries the plugin config for a boolean value.
         """
         val = self.api.config_get_plugin(key).lower()
@@ -193,7 +193,7 @@ class ScriptBase(object):
     def trace(self, msg, *args, **kwargs):
         """ Low-level trace logging.
         """
-        if self.is_enabled('trace'):
+        if self.is_true('trace'):
             kwargs = kwargs.copy()
             kwargs['prefix'] = self.api.color('gray') + '~~~'
             kwargs['no_log'] = True
@@ -252,7 +252,7 @@ class ScriptBase(object):
         return self.api.WEECHAT_RC_OK
 
 
-class WeePlugScriptBase(ScriptBase):
+class BuiltinsScriptBase(ScriptBase):
     """ Base class for built-in WeePlug scripts.
     """
 
@@ -261,8 +261,9 @@ class WeePlugScriptBase(ScriptBase):
         """
         import weeplug
 
+        # Need to set this before calling the base class
         self.AUTHOR = '{0} <{1}>'.format(weeplug.__author__, weeplug.__author_email__)
         self.VERSION = weeplug.__version__
         self.LICENSE = weeplug.__license__
 
-        super(WeePlugScriptBase, self).__init__(namespace, **kwargs)
+        super(BuiltinsScriptBase, self).__init__(namespace, **kwargs)
