@@ -16,9 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from weeplug import events
 from weeplug.support import WeePlugScriptBase
 
 
 class FluxFeedScript(WeePlugScriptBase):
     """ Scan channels for events and feed them into an InfluxDB time series.
+
+        For tracing, use
+            /set plugins.var.python.fluxfeed.trace on
     """
+    PRINT_HOOKS = dict(scanner=None)
+
+    def scanner(self, *args):
+        """ Scan text for event matches.
+
+            ('cb__fluxfeed__scanner__39486640', '0x234eef0', 2L, 'freenode.#weeplug', '#weeplug',
+             '1407345499', 'irc_privmsg,notify_message,nick_pyroscope,log1', True, False, '@pyroscope', 'test 123')
+        """
+        self.trace('scanner: {0}', events.PrintEvent(self, args))
+        return self.api.WEECHAT_RC_OK
