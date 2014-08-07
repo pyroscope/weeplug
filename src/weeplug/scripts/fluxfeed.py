@@ -18,6 +18,7 @@
 
 import re
 import time
+import shlex
 
 try:
     import json
@@ -63,7 +64,7 @@ class FluxFeedScript(BuiltinsScriptBase):
         """
         # TODO: Load triggers from their own file (INI or YAML), and watch it with a timer?!
         self.triggers = []
-        for trigger in (self.api.config_get_plugin("triggers") or '').split():
+        for trigger in shlex.split(self.api.config_get_plugin("triggers") or ''):
             parts = self.TRIGGER_RE.match(trigger)
             if parts:
                 triggerdef = Bunch(nick=None, flags='', sysattr='')
