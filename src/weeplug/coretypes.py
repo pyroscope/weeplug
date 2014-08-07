@@ -43,7 +43,7 @@ class Buffer(object):
     @property
     def server(self):
         """Server moniker of this buffer (for IRC buffers)."""
-        return self.name.rsplit('.', 1)[0]
+        return self.name.split('.', 1)[0]
 
     @property
     def irc_nick(self):
