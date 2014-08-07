@@ -61,6 +61,7 @@ class FluxFeedScript(BuiltinsScriptBase):
     def _parse_triggers(self):
         """ Parse trigger definitions from config.
         """
+        # TODO: Load triggers from their own file (INI or YAML), and watch it with a timer?!
         self.triggers = []
         for trigger in (self.api.config_get_plugin("triggers") or '').split():
             parts = self.TRIGGER_RE.match(trigger)
@@ -113,7 +114,7 @@ class FluxFeedScript(BuiltinsScriptBase):
 
             try:
                 # TODO: Possibly needs to be in a thread, as to not block WeeChat; but will do for now
-                requests.post(fluxurl, data=fluxdata)
+                requests.post(fluxurl, data=fluxdata, timeout=0.010)
             except RequestException, exc:
                 self.log("InfluxDB POST error: {0}", exc, prefix='error')
 
