@@ -130,7 +130,7 @@ class FluxFeedScript(BuiltinsScriptBase):
             ##self.trace('scanner: Ignored {0}', ev)
             return self.api.WEECHAT_RC_OK
 
-        self.trace('scanner[{1}]: {0}', ev, mynick)
+        ##self.trace('scanner[{1}]: {0}', ev, mynick)
 
         for trigger in self.triggers:
             if trigger.buffer_name == ev.buffer.name and (not trigger.nick or 'nick_' + trigger.nick in ev.tags):
