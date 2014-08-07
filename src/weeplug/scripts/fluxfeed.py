@@ -45,6 +45,7 @@ class FluxFeedScript(BuiltinsScriptBase):
         influxdb_url = ('http://localhost:8086/', 'Base URL of the InfluxDB REST API'),
         influxdb_user = ('root', 'Account used for pushing data'),
         influxdb_password = ('root', 'Credentials used for pushing data'),
+        influxdb_timeout = ('0.050', 'Timeout for REST calls [sec]'),
         triggers = ('', 'Trigger definitions of the form "'
             "dbname=«dbname» nick=«nick» buffer=«server».#«channel» regex='«regex with named groups»' [[no]ignorecase]"
             ' sysattr=«sysattr»,... series=«series»"'),
@@ -121,7 +122,8 @@ class FluxFeedScript(BuiltinsScriptBase):
 
             try:
                 # TODO: Possibly needs to be in a thread, as to not block WeeChat; but will do for now
-                requests.post(fluxurl, data=fluxdata, timeout=0.010)
+                requests.post(fluxurl, data=fluxdata,
+                    timeout=float(self.api.config_get_plugin("influxdb_timeout") or '0.050'))
             except RequestException, exc:
                 self.log("InfluxDB POST error: {0}", exc, prefix='error')
 
