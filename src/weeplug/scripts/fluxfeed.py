@@ -45,18 +45,12 @@ class FluxFeedScript(BuiltinsScriptBase):
         influxdb_url = ('http://localhost:8086/', 'Base URL of the InfluxDB REST API'),
         influxdb_user = ('root', 'Account used for pushing data'),
         influxdb_password = ('root', 'Credentials used for pushing data'),
-        triggers = ('', 'Trigger definitions of the form'
-            ' [«nick»@]«server».#«channel»/«regex with named groups»/[i]->«dbname».«series»[+«sysattr»...]'),
+        triggers = ('', 'Trigger definitions of the form "'
+            "dbname=«dbname» nick=«nick» buffer=«server».#«channel» regex='«regex with named groups»' [[no]ignorecase]"
+            ' sysattr=«sysattr»,... series=«series»"'),
         dry_run = ('off', 'Only log data, instead of pushing it'),
     )
     PRINT_HOOKS = dict(scanner=None)
-
-    TRIGGER_RE = re.compile((
-        r'(?:(?P<nick>[^@]+)@)?'
-        r'(?P<buffer_name>[^{delims}]+?)'
-        r'(?P<delim>[{delims}])(?P<regex>.+?)(?P=delim)(?P<flags>i)?'
-        r'->(?P<dbname>[^.]+)\.(?P<series>[^+]+)'
-        r'(?P<sysattr>(?:\+[^+]+)*)').format(delims="/~%"))
 
 
     def _parse_triggers(self):
@@ -64,21 +58,33 @@ class FluxFeedScript(BuiltinsScriptBase):
         """
         # TODO: Load triggers from their own file (INI or YAML), and watch it with a timer?!
         self.triggers = []
-        for trigger in shlex.split(self.api.config_get_plugin("triggers") or ''):
-            parts = self.TRIGGER_RE.match(trigger)
-            if parts:
-                triggerdef = Bunch(nick=None, flags='', sysattr='')
-                triggerdef.update(parts.groupdict())
-                triggerdef.sysattr = set(triggerdef.sysattr.strip('+').split('+'))
-                try:
-                    triggerdef.regex = re.compile(triggerdef.regex, re.I if 'i' in triggerdef.flags else 0)
-                except re.error, exc:
-                    self.log('Ignoring trigger with malformed regex ({1}): {0}', trigger, exc, prefix='warn')
-                else:
-                    self.triggers.append(triggerdef)
-                    self.trace("trigger#{0} = {1} ", len(self.triggers), triggerdef)
+        current = Bunch(nick=None, flags=re.I, sysattr='')
+        for token in shlex.split(self.api.config_get_plugin("triggers") or ''):
+            if '=' in token:
+                key, val = token.split('=', 1)
+                current[key] = val
+
+                if key == 'series':
+                    missing = [i for i in ('dbname', 'buffer', 'regex') if i not in current]
+                    if missing:
+                        self.log('triggers: Ignoring series "{0}" due to missing fields: {1}', val, missing, prefix='warn')
+                        continue
+
+                    triggerdef = Bunch(current)
+                    triggerdef.sysattr = set(i.strip() for i in triggerdef.sysattr.split(','))
+                    try:
+                        triggerdef.regex = re.compile(triggerdef.regex, triggerdef.flags)
+                    except re.error, exc:
+                        self.log('Ignoring series "{0}" with malformed regex "{1}": {0}', val, current.regex, exc, prefix='warn')
+                    else:
+                        self.triggers.append(triggerdef)
+                        self.trace("trigger#{0} = {1} ", len(self.triggers), current)
+            elif token == 'ignorecase':
+                current.flags |= re.I
+            elif token == 'noignorecase':
+                current.flags &= ~re.I
             else:
-                self.log('Ignoring malformed trigger: {0}', trigger, prefix='warn')
+                self.log('triggers: Ignoring unknown token "{0}"', token, prefix='warn')
 
 
     def _influxdb_url(self, dbname):
@@ -133,7 +139,7 @@ class FluxFeedScript(BuiltinsScriptBase):
         ##self.trace('scanner[{1}]: {0}', ev, mynick)
 
         for trigger in self.triggers:
-            if trigger.buffer_name == ev.buffer.name and (not trigger.nick or 'nick_' + trigger.nick in ev.tags):
+            if trigger.buffer == ev.buffer.name and (not trigger.nick or 'nick_' + trigger.nick in ev.tags):
                 match = trigger.regex.search(ev.message)
                 if match:
                     self._push_event(ev, trigger, match)
