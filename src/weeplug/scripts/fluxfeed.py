@@ -76,7 +76,7 @@ class FluxFeedScript(BuiltinsScriptBase):
                     try:
                         triggerdef.regex = re.compile(triggerdef.regex, triggerdef.flags)
                     except re.error, exc:
-                        self.log('Ignoring series "{0}" with malformed regex "{1}": {0}', val, current.regex, exc, prefix='warn')
+                        self.log('Ignoring series "{0}" with malformed regex "{1}": {2}', val, current.regex, exc, prefix='warn')
                     else:
                         self.triggers.append(triggerdef)
                         self.trace("trigger#{0} = {1} ", len(self.triggers), current)
